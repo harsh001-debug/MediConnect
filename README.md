@@ -1,150 +1,452 @@
+
+
 # MediConnect
 
-> A full-stack healthcare platform for discovering doctors, booking clinic and video consultations, managing appointments, and supporting secure healthcare workflows.
+**A full-stack healthcare appointment booking platform for patients, doctors, and administrators.**
 
-MediConnect is a modern healthcare web application designed to connect **patients, doctors, and administrators** through a single platform.
-
-Patients can discover doctors and book appointments, doctors can manage their practice and appointments, and administrators can review doctor applications and oversee platform activity.
-
-The application combines a **React + Vite frontend**, **FastAPI backend**, and **MongoDB** database, with integrations for payments, notifications, OTP verification, AI-assisted prescription workflows, and video consultations.
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [User Roles](#user-roles)
-- [Technology Stack](#technology-stack)
-- [Project Architecture](#project-architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Running the Backend](#running-the-backend)
-- [Running the Frontend](#running-the-frontend)
-- [Testing](#testing)
-- [Production Build](#production-build)
-- [Deployment](#deployment)
-- [API Documentation](#api-documentation)
-- [Security](#security)
-- [Troubleshooting](#troubleshooting)
-- [Future Improvements](#future-improvements)
-
----
+MediConnect makes it easier for patients to find doctors and book clinic or online consultations. Doctors can manage their profiles, availability, and appointments, while administrators can manage users and review doctor applications.
 
 ## Features
 
 ### Patient
 
-- Create an account and sign in
-- Verify contact information using OTP
-- Browse available doctors
-- View doctor profiles and specializations
-- Find available appointment slots
-- Book clinic appointments
-- Book video consultations
-- Manage upcoming appointments
-- View appointment history
-- Receive appointment-related notifications
-- Complete online payments through Razorpay
-- Access healthcare-related documents and prescriptions
+- Register and log in securely.
+- Search doctors by specialty, city, consultation mode, fees, and availability.
+- Book clinic or online consultations.
+- Make payments using Razorpay.
+- View and manage appointments.
+- Receive notifications and submit reviews.
+- Upload prescription photos when the feature is enabled.
 
 ### Doctor
 
-- Manage doctor profile and professional information
-- Manage practice availability
-- Create and manage appointment slots
-- View scheduled appointments
-- Manage patient consultations
-- Support clinic and online consultations
-- Generate and manage prescriptions
-- Receive appointment notifications
+- Manage doctor profile and practice details.
+- Add and manage available appointment slots.
+- View upcoming and previous appointments.
+- Manage clinic and online consultation availability.
 
 ### Administrator
 
-- Review doctor applications
-- Manage doctor approval workflows
-- Monitor appointments
-- Review platform activity
-- Manage administrative workflows
+- Review doctor applications.
+- Manage user accounts and appointments.
+- Suspend or reactivate accounts.
+- Review platform activity.
 
-### Platform
+### Guest booking
 
-- MongoDB-backed data management
-- OTP-based verification
-- Email notifications
-- SMS notifications
-- Online payments through Razorpay
-- Video consultation support
-- AI-assisted prescription functionality
-- REST API architecture
-- Automated backend testing
-- Production deployment configuration
+- Book eligible urgent appointments without creating a full patient account.
+- Verify a mobile number before booking.
 
 ---
 
 ## Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19 |
-| Frontend Tooling | Vite 6 |
-| Language | TypeScript |
-| Routing | React Router |
-| UI Icons | Lucide React |
-| Backend | FastAPI |
-| Backend Language | Python |
-| Database | MongoDB |
-| Testing | Pytest + Mongomock |
-| Payments | Razorpay |
-| Email | Resend |
-| SMS | Twilio |
-| AI | Google Gemini |
-| Deployment | Docker + Render |
-
-The frontend package currently uses React 19, React Router 7, TypeScript 5.7 and Vite 6.
-
-The backend development requirements include Pytest and Mongomock in addition to the main backend dependencies.
+| Part                       | Technology               |
+| -------------------------- | ------------------------ |
+| Frontend                   | React 19, TypeScript     |
+| Frontend tooling           | Vite 6                   |
+| Routing                    | React Router             |
+| Backend                    | Python 3.13, FastAPI     |
+| API server                 | Uvicorn                  |
+| Database                   | MongoDB Atlas            |
+| Database connection        | PyMongo                  |
+| Payments                   | Razorpay                 |
+| Email                      | SMTP / Resend            |
+| SMS verification           | Twilio                   |
+| AI prescription processing | Google Gemini (optional) |
+| Testing                    | Pytest, Mongomock        |
+| Deployment                 | Docker, Render           |
 
 ---
 
-## Project Architecture
+## Application Architecture
 
-```text
-                         ┌─────────────────────┐
-                         │      Patients       │
-                         └──────────┬──────────┘
-                                    │
-                                    │
-                         ┌──────────▼──────────┐
-                         │   React Frontend    │
-                         │   React + Vite      │
-                         │   TypeScript        │
-                         └──────────┬──────────┘
-                                    │
-                              REST API
-                                    │
-                         ┌──────────▼──────────┐
-                         │   FastAPI Backend   │
-                         │                     │
-                         │ Authentication      │
-                         │ Doctors             │
-                         │ Appointments        │
-                         │ Payments            │
-                         │ Notifications       │
-                         │ Prescriptions       │
-                         └──────────┬──────────┘
-                                    │
-              ┌─────────────────────┼─────────────────────┐
-              │                     │                     │
-       ┌──────▼──────┐       ┌──────▼──────┐       ┌─────▼──────┐
-       │   MongoDB   │       │  External   │       │    AI      │
-       │   Database  │       │  Services   │       │  Gemini    │
-       └─────────────┘       └─────────────┘       └────────────┘
-                                  │
-                     ┌────────────┼────────────┐
-                     │            │            │
-                 Razorpay      Resend       Twilio
+The frontend is built with React and communicates with the FastAPI backend through API requests. The backend handles authentication, appointments, payments, notifications, and database operations.
+
+```mermaid
+flowchart TD
+    USER["Patient / Doctor / Admin"]
+    
+    subgraph FRONTEND["Frontend"]
+        REACT["React + TypeScript"]
+        VITE["Vite Development Server"]
+        REACT --> VITE
+    end
+
+    subgraph BACKEND["Backend"]
+        API["FastAPI REST API"]
+        AUTH["Authentication and Authorization"]
+        BOOKING["Doctor and Appointment Services"]
+        PAYMENT["Payment and Refund Services"]
+        NOTIFY["Notification Services"]
+        API --> AUTH
+        API --> BOOKING
+        API --> PAYMENT
+        API --> NOTIFY
+    end
+
+    DB[("MongoDB Atlas")]
+
+    RAZORPAY["Razorpay"]
+    MESSAGING["SMTP / Resend / Twilio"]
+    GEMINI["Google Gemini (Optional)"]
+
+    USER --> REACT
+    VITE -->|"API requests: /api"| API
+    AUTH --> DB
+    BOOKING --> DB
+    PAYMENT --> DB
+    NOTIFY --> DB
+
+    PAYMENT --> RAZORPAY
+    NOTIFY --> MESSAGING
+    API --> GEMINI
 ```
+
+### How it works
+
+1. A user opens MediConnect in a browser.
+2. The React frontend displays the website and handles user interactions.
+3. The frontend sends API requests to FastAPI.
+4. FastAPI processes requests and reads or updates MongoDB.
+5. For enabled features, the backend communicates with services such as Razorpay, Twilio, Resend, and Google Gemini.
+
+**Development:** Vite runs on port `5173` and forwards API requests to FastAPI on port `8000`.
+
+**Production:** The frontend build is placed in `backend/app/static`, and FastAPI can serve the built website.
+
+---
+
+## Database Architecture
+
+MediConnect uses MongoDB collections to store user accounts, doctor profiles, appointment slots, bookings, payments, and other application data.
+
+The following is a simplified diagram of the main database relationships.
+
+```mermaid
+erDiagram
+    USERS ||--o| DOCTORPROFILES : "has doctor profile"
+    USERS ||--o{ LOGINSESSIONS : "has sessions"
+    USERS ||--o{ APPOINTMENTS : "books"
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ REVIEWS : "writes"
+
+    DOCTORPROFILES ||--o{ VERIFICATIONCHECKS : "has checks"
+    DOCTORPROFILES ||--o{ SLOTS : "offers"
+    DOCTORPROFILES ||--o{ APPOINTMENTS : "provides care"
+    DOCTORPROFILES ||--o{ REVIEWS : "receives"
+
+    GUESTPATIENTS ||--o{ APPOINTMENTS : "books"
+
+    SLOTS ||--o{ APPOINTMENTS : "has booking history"
+
+    APPOINTMENTS ||--o| PAYMENTATTEMPTS : "has payment"
+    APPOINTMENTS ||--o{ REFUNDS : "may have"
+    APPOINTMENTS ||--o| PRESCRIPTIONS : "stores"
+    APPOINTMENTS ||--o{ PRESCRIPTIONAUDIT : "records activity"
+    APPOINTMENTS ||--o| REVIEWS : "may receive"
+
+    USERS {
+        int _id PK
+        string full_name
+        string email
+        string phone
+        string password_hash
+        string role
+    }
+
+    DOCTORPROFILES {
+        int _id PK
+        string specialty
+        string qualifications
+        string clinic_name
+        string city
+        string verification_status
+    }
+
+    GUESTPATIENTS {
+        int _id PK
+        string phone
+    }
+
+    SLOTS {
+        int _id PK
+        int doctor_id FK
+        string mode
+        datetime start_at
+        datetime end_at
+        string status
+    }
+
+    APPOINTMENTS {
+        int _id PK
+        int slot_id FK
+        int doctor_id FK
+        int patient_id FK
+        int guest_patient_id FK
+        string status
+        int amount_paise
+    }
+
+    PAYMENTATTEMPTS {
+        int _id PK
+        int appointment_id FK
+        string razorpay_order_id
+        string status
+    }
+
+    REFUNDS {
+        string _id PK
+        int appointment_id FK
+        int amount_paise
+        string status
+    }
+
+    PRESCRIPTIONS {
+        int _id PK
+        string status
+        string version
+    }
+
+    REVIEWS {
+        int _id PK
+        int appointment_id FK
+        int doctor_id FK
+        int patient_id FK
+        int rating
+    }
+
+    NOTIFICATIONS {
+        int _id PK
+        int user_id FK
+        string body
+        datetime created_at
+    }
+
+    LOGINSESSIONS {
+        string _id PK
+        int user_id FK
+        datetime expires_at
+    }
+
+    VERIFICATIONCHECKS {
+        int _id PK
+        int doctor_id FK
+        string result
+    }
+
+    PRESCRIPTIONAUDIT {
+        string _id PK
+        int appointment_id FK
+        string action
+    }
+```
+
+### Important database notes
+
+- `users` stores patient, doctor, and administrator account information.
+- `doctorprofiles` stores a doctor's professional and clinic details separately from their account.
+- `slots` stores available clinic and online consultation times.
+- `appointments` connects patients or guest patients with doctors and slots.
+- `paymentattempts` and `refunds` store payment-related information.
+- `prescriptions` stores prescription data associated with an appointment.
+- `reviews` stores patient feedback about completed appointments.
+
+MongoDB uses document references rather than SQL foreign keys. The application checks these relationships, and database validators and indexes help maintain data consistency.
+
+For the complete collection structure and rules, see [`docs/DATABASE.md`](docs/DATABASE.md).
+
+---
+
+## Run MediConnect Locally
+
+Follow these steps to run the project on your computer.
+
+### 1. Prerequisites
+
+Install the following software:
+
+| Software | Required version                                |
+| -------- | ----------------------------------------------- |
+| Python   | 3.13                                            |
+| Node.js  | 22 LTS or newer                                 |
+| pnpm     | 11                                              |
+| MongoDB  | MongoDB Atlas or another replica-set deployment |
+| Git      | Latest stable version                           |
+
+MongoDB Atlas is recommended. The booking and payment workflows use database transactions, which require MongoDB replica-set support.
+
+### 2. Clone the repository
+
+Open your terminal and run:
+
+```bash
+git clone https://github.com/harsh001-debug/MediConnect.git
+cd MediConnect
+```
+
+Install pnpm if it is not already installed:
+
+```bash
+npm install --global pnpm@11.19.0
+```
+
+### 3. Configure environment variables
+
+Create your local environment file from the example.
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item backend/.env.example backend/.env
+```
+
+**macOS / Linux:**
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Open `backend/.env` and configure at least your MongoDB connection:
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+MONGODB_DB_NAME=mediconnect
+APP_ENV=development
+```
+
+You can configure the other services in the same file:
+
+| Variable group     | Used for                         |
+| ------------------ | -------------------------------- |
+| MongoDB variables  | Database connection              |
+| Email variables    | Email verification and recovery  |
+| Twilio variables   | SMS verification                 |
+| Razorpay variables | Payments and refunds             |
+| Gemini variables   | Optional prescription processing |
+
+Use your own credentials and test-mode keys. Do not commit `backend/.env` to GitHub. The repository includes `backend/.env.example` as a safe template.
+
+### 4. Start the backend
+
+Open a terminal at the project root:
+
+```bash
+cd backend
+```
+
+Create a Python virtual environment:
+
+```bash
+python -m venv .venv
+```
+
+Install the backend dependencies.
+
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+```
+
+**macOS / Linux:**
+
+```bash
+./.venv/bin/python -m pip install -r requirements-dev.txt
+```
+
+Start the FastAPI server.
+
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
+
+**macOS / Linux:**
+
+```bash
+./.venv/bin/python -m uvicorn app.main:app --reload --port 8000
+```
+
+The backend will run at:
+
+`http://localhost:8000`
+
+Check the database connection using:
+
+`http://localhost:8000/api/v1/health`
+
+Open the interactive API documentation at:
+
+`http://localhost:8000/docs`
+
+A successful health response looks like:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### 5. Start the frontend
+
+Open a **second terminal** at the project root:
+
+```bash
+cd frontend
+```
+
+Install the frontend dependencies:
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+Start the Vite development server:
+
+```bash
+pnpm dev
+```
+
+Open the website in your browser:
+
+`http://localhost:5173`
+
+The frontend automatically forwards API requests to the backend running on port `8000`.
+
+### 6. Create local demo accounts (optional)
+
+You can create local administrator and patient accounts, along with fictional demo doctors and appointment slots.
+
+In `backend/.env`, configure the seed values. For example:
+
+```env
+SEED_ADMIN_EMAIL=admin@example.com
+SEED_ADMIN_PASSWORD=change-this-password
+
+SEED_PATIENT_EMAIL=patient@example.com
+SEED_PATIENT_PASSWORD=change-this-password
+
+SEED_DEMO_DATA=1
+SEED_DOCTOR_PASSWORD=change-this-password
+```
+
+Then, from the `backend` directory, run:
+
+**Windows PowerShell:**
+
+```powershell
+.\.venv\Scripts\python.exe seed.py
+```
+
+**macOS / Linux:**
+
+```bash
+./.venv/bin/python seed.py
+```
+
+The seed script creates the configured accounts and, when demo data is enabled, fictional doctor profiles and slots. Use a development database for this process.
 
 ---
 
@@ -155,506 +457,51 @@ MediConnect/
 │
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   ├── models/
-│   │   ├── services/
-│   │   ├── ...
-│   │   └── main.py
+│   │   ├── api/              # API endpoints
+│   │   ├── models.py         # Database record models
+│   │   ├── db.py             # MongoDB connection and operations
+│   │   ├── database_schema.py# Collection rules and indexes
+│   │   └── main.py           # FastAPI application entry point
 │   │
-│   ├── tests/
-│   ├── requirements.txt
-│   ├── requirements-dev.txt
-│   ├── seed.py
-│   └── manage_database.py
+│   ├── tests/                # Backend tests
+│   ├── .env.example          # Environment variable template
+│   ├── requirements.txt      # Backend dependencies
+│   ├── requirements-dev.txt  # Development and test dependencies
+│   └── seed.py               # Demo account and data setup
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── ...
-│   │   └── App.tsx
+│   │   ├── components/       # Reusable UI components
+│   │   ├── pages/            # Website pages
+│   │   └── App.tsx           # Main frontend application
 │   │
 │   ├── package.json
-│   └── vite.config.*
+│   └── vite.config.ts
 │
 ├── docs/
-│   └── ...
+│   └── DATABASE.md           # Detailed database documentation
 │
-├── .dockerignore
-├── .gitignore
 ├── Dockerfile
 ├── render.yaml
-├── DEMO_ACCOUNTS.md
 └── README.md
 ```
 
-The repository separates the application into `frontend/` and `backend/`, with backend tests and database utilities maintained alongside the API implementation.
+### Frontend production build
 
----
-
-# Getting Started
-
-## Prerequisites
-
-Install the following before starting:
-
-- **Python 3.13**
-- **Node.js 22 LTS or newer**
-- **pnpm 11**
-- MongoDB database
-- Git
-
-You will also need credentials for the external services used by the features you want to enable.
-
----
-
-## 1. Clone the Repository
+From the `frontend` directory:
 
 ```bash
-git clone https://github.com/harsh001-debug/MediConnect.git
-cd MediConnect
-```
-
-Install the required pnpm version:
-
-```bash
-npm install --global pnpm@11.19.0
-```
-
-If pnpm 11 is already installed, this step can be skipped.
-
----
-
-# Environment Variables
-
-MediConnect uses environment variables for database credentials, authentication secrets, payment providers, notifications, and AI services.
-
-**Never commit real credentials or API keys to GitHub.**
-
-Create your local environment file based on the project's environment-variable template.
-
-For example:
-
-```text
-backend/
-└── .env
-```
-
-A typical configuration may include:
-
-```env
-MONGODB_URI=
-MONGODB_DB_NAME=mediconnect
-
-RAZORPAY_KEY_ID=
-RAZORPAY_KEY_SECRET=
-RAZORPAY_WEBHOOK_SECRET=
-
-OTP_SECRET=
-
-OTP_EMAIL_FROM=
-RESEND_API_KEY=
-
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_MESSAGING_SERVICE_SID=
-
-APP_ENV=development
-
-PRESCRIPTION_AI_PROVIDER=gemini
-GEMINI_API_KEY=
-GEMINI_MODEL=
-```
-
-Use your own credentials for each service.
-
-The repository's Render configuration also keeps sensitive values outside source control by requiring them as deployment environment variables.
-
-> **Security:** Do not upload `.env` files containing real secrets to GitHub.
-
----
-
-# Running the Backend
-
-Open a terminal at the project root:
-
-```bash
-cd backend
-```
-
-Create a Python virtual environment.
-
-### Windows PowerShell
-
-```powershell
-python -m venv .venv
-```
-
-Activate it:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-Install dependencies:
-
-```powershell
-python -m pip install -r requirements-dev.txt
-```
-
-Start FastAPI:
-
-```powershell
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-The API will be available at:
-
-```text
-http://localhost:8000
-```
-
-Health check:
-
-```text
-http://localhost:8000/api/v1/health
-```
-
-FastAPI's interactive API documentation is available at:
-
-```text
-http://localhost:8000/docs
-```
-
----
-
-# Running the Frontend
-
-Open a second terminal from the project root:
-
-```bash
-cd frontend
-```
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Start the development server:
-
-```bash
-pnpm dev
-```
-
-The frontend will normally be available at:
-
-```text
-http://localhost:5173
-```
-
-The frontend is built with React, TypeScript, Vite and React Router.
-
----
-
-# Testing
-
-Backend tests are located in:
-
-```text
-backend/tests/
-```
-
-From the `backend` directory:
-
-### Windows
-
-```powershell
-python -m pytest -q
-```
-
-### macOS / Linux
-
-```bash
-python -m pytest -q
-```
-
-The development test configuration uses Pytest and Mongomock for isolated database-related testing.
-
----
-
-# Production Build
-
-To create a production frontend build:
-
-```bash
-cd frontend
 pnpm build
 ```
 
-The build performs TypeScript checking and generates the Vite production bundle.
-
-To preview the production build locally:
-
-```bash
-pnpm preview
-```
-
----
-
-# Deployment
-
-MediConnect includes a `render.yaml` configuration for deployment on **Render**.
-
-The deployment configuration defines:
-
-- Docker-based web service
-- MongoDB connection
-- Razorpay configuration
-- OTP configuration
-- Email configuration
-- Twilio SMS configuration
-- Gemini AI configuration
-- Production environment settings
-- API health-check endpoint
-
-The configured Render service uses:
+The build output is generated in:
 
 ```text
-/api/v1/health
+backend/app/static/
 ```
 
-as its health-check path.
+After building, start FastAPI and open:
 
-### Deployment Environment Variables
+`http://localhost:8000`
 
-Production secrets should be configured through the hosting provider's environment-variable system.
-
-Do not place production credentials directly inside:
-
-- Source code
-- `README.md`
-- `render.yaml`
-- Frontend JavaScript/TypeScript files
-- Git commits
-
----
-
-# API Documentation
-
-When the backend is running locally, FastAPI provides interactive API documentation at:
-
-```text
-http://localhost:8000/docs
-```
-
-The API is organized around areas such as:
-
-```text
-Authentication
-Doctors
-Appointments
-Patients
-Guests
-Administration
-Payments
-Notifications
-Prescriptions
-```
-
----
-
-# Security
-
-MediConnect handles healthcare-related information and integrates with external services, so security should be treated as a core requirement.
-
-### Recommended Practices
-
-- Never commit `.env` files.
-- Never expose API keys in frontend source code.
-- Use environment variables for secrets.
-- Rotate credentials if they are accidentally exposed.
-- Restrict MongoDB network access where possible.
-- Use HTTPS in production.
-- Use test/sandbox payment credentials during development.
-- Avoid using real patient information during development and testing.
-- Keep dependencies updated.
-- Apply appropriate authorization checks to protected API endpoints.
-
-### Important
-
-MediConnect is a software project and should not be considered a substitute for a certified clinical system, medical advice, or regulatory compliance assessment.
-
-Before using the platform with real patient data, conduct appropriate security, privacy, compliance, infrastructure, and clinical-safety reviews.
-
----
-
-# Troubleshooting
-
-## Backend health check fails
-
-Check:
-
-1. MongoDB connection string
-2. MongoDB database name
-3. MongoDB network access rules
-4. Database credentials
-5. Environment variables
-6. FastAPI terminal for startup errors
-
----
-
-## Doctor directory is empty
-
-Make sure the database contains approved/demo doctors.
-
-The repository includes database/seed utilities that can be used to prepare development data.
-
----
-
-## OTP email or SMS is not received
-
-Check:
-
-- Email/SMS provider credentials
-- Recipient contact information
-- Provider delivery logs
-- Environment variables
-- Backend startup logs
-
----
-
-## Razorpay checkout is unavailable
-
-Verify:
-
-```text
-RAZORPAY_KEY_ID
-RAZORPAY_KEY_SECRET
-RAZORPAY_WEBHOOK_SECRET
-```
-
-Use Razorpay Test Mode credentials during development.
-
----
-
-## Frontend cannot communicate with backend
-
-Make sure FastAPI is running on:
-
-```text
-http://localhost:8000
-```
-
-Then restart the Vite development server if the API configuration was changed.
-
----
-
-# Development Workflow
-
-A typical development workflow is:
-
-```text
-1. Clone repository
-       ↓
-2. Configure environment variables
-       ↓
-3. Start MongoDB
-       ↓
-4. Start FastAPI backend
-       ↓
-5. Start React frontend
-       ↓
-6. Test authentication
-       ↓
-7. Test doctor discovery
-       ↓
-8. Test appointment booking
-       ↓
-9. Test payments / notifications
-       ↓
-10. Run automated tests
-       ↓
-11. Build frontend
-       ↓
-12. Deploy
-```
-
----
-
-# Future Improvements
-
-Potential areas for further development include:
-
-- Enhanced role-based access control
-- More comprehensive automated test coverage
-- Improved appointment scheduling workflows
-- Advanced doctor search and filtering
-- Better notification management
-- Enhanced video consultation experience
-- Healthcare document management
-- Audit logging
-- Advanced administrative analytics
-- Improved observability and monitoring
-- Production-grade security and compliance hardening
-- CI/CD automation
-
----
-
-# Contributing
-
-Contributions are welcome.
-
-A typical contribution workflow:
-
-```bash
-git checkout -b feature/your-feature
-```
-
-Make your changes, test them locally, and commit:
-
-```bash
-git add .
-git commit -m "Add: your feature"
-```
-
-Push the branch:
-
-```bash
-git push origin feature/your-feature
-```
-
-Then open a Pull Request.
-
-Before submitting a contribution:
-
-- Ensure tests pass.
-- Ensure the frontend builds successfully.
-- Do not commit secrets.
-- Keep changes focused.
-- Update documentation when necessary.
-
----
-
-# License
-
-Add the project's chosen license here before distributing the project publicly.
-
----
-
-## Project Status
-
-MediConnect is an actively developed full-stack healthcare application.
-
-The project is suitable for **development, demonstration, testing, and further extension**. Production use with real healthcare data requires additional security, privacy, regulatory, infrastructure, and clinical-safety validation.
-
----
-
-## Author
-
-**Harsh Kumar Tiwari**
-
-GitHub: [@harsh001-debug](https://github.com/harsh001-debug)
-
-Repository: [MediConnect](https://github.com/harsh001-debug/MediConnect)
+FastAPI serves the built frontend from that location when the build exists.
