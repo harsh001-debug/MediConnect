@@ -3,6 +3,8 @@ services:
     name: mediconnect-demo
     runtime: docker
     plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/v1/health
     envVars:
       - key: MONGODB_URI
@@ -17,6 +19,8 @@ services:
         sync: false
       - key: OTP_SECRET
         generateValue: true
+      - key: OTP_EMAIL_PROVIDER
+        value: resend
       - key: OTP_EMAIL_FROM
         sync: false
       - key: RESEND_API_KEY
@@ -31,7 +35,6 @@ services:
         value: production
       - key: PRESCRIPTION_AI_PROVIDER
         value: gemini
-      - key: GEMINI_API_KEY
-        sync: false
       - key: GEMINI_MODEL
         value: gemini-3.5-flash-lite
+      # Add GEMINI_API_KEY and the prescription settings in the dashboard when enabling uploads.
